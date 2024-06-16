@@ -7,8 +7,11 @@
 
 import SwiftUI
 
+
 struct ContentView: View {
     
+    @StateObject private var viewModel = WeatherViewModel()
+
     @State private var isNight = false
     var body: some View {
         ZStack{
@@ -23,6 +26,8 @@ struct ContentView: View {
                 }, label: {
                     WeatherButton(title: "Change Day Time" , textColor: .blue, backgroundColor: .white)
                 })
+                Spacer()
+                //Text("Temperature: \(viewModel.temperature)")
                 Spacer()
             }
         }
