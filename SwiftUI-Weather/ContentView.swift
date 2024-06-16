@@ -8,22 +8,18 @@
 import SwiftUI
 
 struct ContentView: View {
+    
+    @State private var isNight = false
     var body: some View {
         ZStack{
-            BackgroundView(topColor: .blue, bottomColor: Color("lightblue"))
+            BackgroundView(isNight: $isNight)
             VStack {
                 CityTextView(cityName: "Cupertino, CA")
                 MainWeatherStatusView(imageName: "cloud.sun.fill", temperature: 76)
-                HStack(spacing: 20){
-                    WeatherDayView(dayOffWeek: "TUE", imageName: "cloud.sun.fill", temperature: 74)
-                    WeatherDayView(dayOffWeek: "WD", imageName: "sunrise.fill", temperature: 74)
-                    WeatherDayView(dayOffWeek: "TUE", imageName: "cloud.sun.fill", temperature: 74)
-                    WeatherDayView(dayOffWeek: "TUE", imageName: "cloud.sun.fill", temperature: 74)
-                    WeatherDayView(dayOffWeek: "TUE", imageName: "cloud.sun.fill", temperature: 77)
-                }
+                NextFiveDays()
                 Spacer()
                 Button(action: {
-                    print("Tapped")
+                    isNight.toggle()
                 }, label: {
                     WeatherButton(title: "Change Day Time" , textColor: .blue, backgroundColor: .white)
                 })
@@ -62,11 +58,10 @@ struct WeatherDayView: View {
 }
 
 struct BackgroundView: View {
-    var topColor: Color
-    var bottomColor: Color
+    @Binding var isNight: Bool
     
     var body: some View {
-        LinearGradient(gradient: Gradient(colors: [topColor, bottomColor]), startPoint: .topLeading, endPoint: .bottomTrailing)
+        LinearGradient(gradient: Gradient(colors: [isNight ? .black : .blue, isNight ? .gray : Color("lightBlue")]), startPoint: .topLeading, endPoint: .bottomTrailing)
             .ignoresSafeArea()
     }
 }
@@ -98,3 +93,18 @@ struct MainWeatherStatusView: View {
     }
 }
 
+
+struct NextFiveDays: View {
+    let days = ["TUE", "WED", "THU", "FRI","SAT" ]
+    let degree = [72, 74, 76, 78,72 ]
+    let sfSymbols = ["cloud.sun.fill", "cloud.rain.fill", "sun.max.fill",
+    "sun.max.fill", "sun.rain.fill"]
+    var body: some View {
+        HStack(spacing: 20){
+            ForEach(days.indices, id: \.self){ index in
+                WeatherDayView(dayOffWeek: days[index], imageName: sfSymbols[index], temperature: degree[index])
+               
+            }
+        }
+    }
+}
