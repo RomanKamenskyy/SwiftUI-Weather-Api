@@ -10,28 +10,28 @@ import SwiftUI
 
 struct ContentView: View {
     
-    @StateObject private var viewModel = WeatherViewModel()
-
+    // @ObservedObject var viewModel = WeatherViewModel()
+    
     @State private var isNight = false
     var body: some View {
+        
         ZStack{
             BackgroundView(isNight: $isNight)
             VStack {
-                CityTextView(cityName: "Cupertino, CA")
-                MainWeatherStatusView(imageName: "cloud.sun.fill", temperature: 76)
+                CityTextView()
+                MainWeatherStatusView()
                 NextFiveDays()
+                
                 Spacer()
                 Button(action: {
                     isNight.toggle()
                 }, label: {
-                    WeatherButton(title: "Change Day Time" , textColor: .blue, backgroundColor: .white)
+                    WeatherButton(title: "Dart theme" , textColor: .blue, backgroundColor: .white)
                 })
                 Spacer()
-                //Text("Temperature: \(viewModel.temperature)")
-                Spacer()
+                                
             }
         }
-       
     }
 }
 
@@ -43,18 +43,18 @@ struct WeatherDayView: View {
     
     var dayOffWeek: String
     var imageName: String
-    var temperature: Int
+    var temperature: String
     
     var body: some View {
-        VStack {
+        VStack(alignment: .center) {
             Text(dayOffWeek)
-                .font(.system(size: 20, weight: .medium))
+                .font(.system(size: 15, weight: .medium))
                 .foregroundColor(.white)
             Image(systemName: imageName)
                 .renderingMode(.original)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: 45, height: 45)
+                .frame(width: 60, height: 60)
             Text("\(temperature)°")
                 .font(.system(size: 20, weight: .medium))
                 .foregroundColor(.white)
@@ -72,44 +72,116 @@ struct BackgroundView: View {
 }
 
 struct CityTextView: View {
-    var cityName: String
+    
+    @ObservedObject var viewModel = WeatherViewModel()
+    
     var body: some View{
-        Text(cityName)
+        Text(viewModel.city?.name ?? "")
             .font(.system(size: 32, weight: .medium, design: .default))
             .foregroundColor(.white)
             .padding()
     }
 }
 struct MainWeatherStatusView: View {
-    var imageName: String
-    var temperature: Int
+    
+    @ObservedObject var viewModel = WeatherViewModel()
+    
+    
     var body: some View{
-        VStack(spacing: 8) {
-            Image(systemName: imageName)
-                .renderingMode(.original)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 180, height: 180)
-            Text("\(temperature)°")
-                .font(.system(size: 70, weight: .medium))
-                .foregroundColor(.white)
+        
+        
+        if let firstForecast = viewModel.forecast.first {
+            ForEach([firstForecast], id: \.self) { weather in
+                
+                VStack(spacing: 8) {
+                    Image(systemName: getWeatherIcon(weather.weather.first?.icon ?? "01d"))
+                        .renderingMode(.original)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 150, height: 150)
+                    Text("\(weather.main.temp, specifier: "%.0f")°")
+                        .font(.system(size: 50, weight: .medium))
+                        .foregroundColor(.white)
+                    Text("\(formatDate(weather.dt_txt))  ")
+                        .font(.system(size: 30, weight: .medium))
+                        .foregroundColor(.white)
+                    
+                }
+                .padding(.bottom,40)
+            }
         }
-        .padding(.bottom,40)
+    
     }
+    private func getWeatherIcon(_ icon: String) -> String {
+        // Функция преобразования иконки Weatherbit в SystemName иконку
+        switch icon {
+        case "01d": return "sun.max.fill"
+        case "01n": return "moon.stars.fill"
+        case "02d", "02n": return "cloud.sun.fill"
+        case "03d", "03n": return "cloud.fill"
+        case "04d", "04n": return "cloud.fill"
+        case "10d": return "cloud.rain.fill"
+        default: return "cloud.fill"
+        }
+    }
+    private func formatDate(_ dateStr: String) -> String {
+        let dateFormatter = DateFormatter()
+        // Укажите формат даты, который включает время
+        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        guard let date = dateFormatter.date(from: dateStr) else { return "" }
+        // Измените формат для получения дня недели
+        dateFormatter.dateFormat = "MMMM dd, HH:mm , E"
+        return dateFormatter.string(from: date)
+    }
+    
 }
 
 
 struct NextFiveDays: View {
-    let days = ["TUE", "WED", "THU", "FRI","SAT" ]
-    let degree = [72, 74, 76, 78,72 ]
-    let sfSymbols = ["cloud.sun.fill", "cloud.rain.fill", "sun.max.fill",
-    "sun.max.fill", "sun.rain.fill"]
+
+    @ObservedObject var viewModel = WeatherViewModel()
+    // let days = ["TUE", "WED", "THU", "FRI","SAT" ]
+    //let degree = [72, 74, 76, 78,72 ]
+    // let sfSymbols = ["cloud.sun.fill", "cloud.rain.fill", "sun.max.fill",
+    //"sun.max.fill", "sun.rain.fill"]
     var body: some View {
         HStack(spacing: 20){
-            ForEach(days.indices, id: \.self){ index in
-                WeatherDayView(dayOffWeek: days[index], imageName: sfSymbols[index], temperature: degree[index])
-               
+            
+            HStack(){
+
+                ForEach(viewModel.forecast.dropFirst(), id: \.self) { weather in
+                    VStack(alignment: .center) {
+                        if let city = viewModel.city {
+                           
+                            WeatherDayView(dayOffWeek: formatDate(weather.dt_txt), imageName: getWeatherIcon(weather.weather.first?.icon ?? "01d"), temperature: String(format: "%.1f",(weather.main.temp)))
+                        }
+                    }
+                }
             }
+            .onAppear {
+                viewModel.fetchWeatherForecast()
+            }
+        }
+    }
+    
+    
+    private func formatDate(_ dateStr: String) -> String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        guard let date = dateFormatter.date(from: dateStr) else { return "" }
+        dateFormatter.dateFormat = "E, HH:mm "
+        return dateFormatter.string(from: date)
+    }
+    
+    private func getWeatherIcon(_ icon: String) -> String {
+        switch icon {
+        case "01d": return "sun.max.fill"
+        case "01n": return "moon.stars.fill"
+        case "02d", "02n": return "cloud.sun.fill"
+        case "03d", "03n": return "cloud.fill"
+        case "04d", "04n": return "cloud.fill"
+        case "10d": return "cloud.rain.fill"
+        default: return "cloud.fill"
         }
     }
 }
