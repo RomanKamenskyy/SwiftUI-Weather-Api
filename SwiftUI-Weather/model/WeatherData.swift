@@ -42,7 +42,6 @@ struct WeatherDetail: Codable,Hashable {
     let icon: String
 }
 
-
 struct City: Codable {
     let name: String
     let country: String

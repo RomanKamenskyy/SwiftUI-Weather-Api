@@ -29,7 +29,6 @@ struct ContentView: View {
                     WeatherButton(title: "Dart theme" , textColor: .blue, backgroundColor: .white)
                 })
                 Spacer()
-                                
             }
         }
     }
@@ -133,22 +132,15 @@ struct MainWeatherStatusView: View {
         dateFormatter.dateFormat = "MMMM dd, HH:mm , E"
         return dateFormatter.string(from: date)
     }
-    
 }
-
 
 struct NextFiveDays: View {
 
     @ObservedObject var viewModel = WeatherViewModel()
-    // let days = ["TUE", "WED", "THU", "FRI","SAT" ]
-    //let degree = [72, 74, 76, 78,72 ]
-    // let sfSymbols = ["cloud.sun.fill", "cloud.rain.fill", "sun.max.fill",
-    //"sun.max.fill", "sun.rain.fill"]
     var body: some View {
         HStack(spacing: 20){
             
             HStack(){
-
                 ForEach(viewModel.forecast.dropFirst(), id: \.self) { weather in
                     VStack(alignment: .center) {
                         if let city = viewModel.city {
@@ -163,7 +155,6 @@ struct NextFiveDays: View {
             }
         }
     }
-    
     
     private func formatDate(_ dateStr: String) -> String {
         let dateFormatter = DateFormatter()
